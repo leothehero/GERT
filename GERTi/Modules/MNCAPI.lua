@@ -1,8 +1,9 @@
--- GERT v1.5 Build 9
+-- MNC API v1.5 Build 13
 local MNCAPI = {}
 local component = require("component")
 local computer = require("computer")
 local event = require("event")
+local filesystem = require("filesystem")
 local serialize = require("serialization")
 local mTable, tTable, nodes, connections, cPend
 local iAdd = 0.0
@@ -100,7 +101,7 @@ end
 
 function MNCAPI.openSocket(gAddress, outID)
 	local receiveM, cDex
-	if type(gAddress) == "string" or (math.floor(gAddress) == gAddress and gAddress ~= 0) then
+	if (type(gAddress) == "string" and not tonumber(gAddress)) or (math.floor(gAddress) == gAddress and gAddress ~= 0) then
 		gAddress = DNSCache[gAddress] or MNCAPI.resolveDNS(gAddress)
 	end
 	if not gAddress then
@@ -149,7 +150,7 @@ end
 function MNCAPI.resolveDNS(remoteHost)
 	if modules["DNS"] then
 		DNSSocket:write("DNSResolve", remoteHost)
-		waitWithCancel(3, function () return (DNSSocket:read("-k")) end)
+		waitWithCancel(3, function () return (#DNSSocket:read("-k")>=1) end)
 		DNSCache[remoteHost] = DNSSocket:read()[1]
 		return DNSCache[remoteHost]
 	else
@@ -207,6 +208,9 @@ function MNCAPI.loadTables(nTable, cTable, cPTable)
 	nodes = nTable
 	connections = cTable
 	cPend = cPTable
+	if filesystem.exists("/etc/rc.d/DNS.lua") then
+		DNSSocket = MNCAPI.openSocket(0.0, 53)
+	end
 	print("MNCAPI Loaded")
 end
 function MNCAPI.registerNetworkService(name, port)

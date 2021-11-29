@@ -1,4 +1,4 @@
--- GERT v1.5 Build 9
+-- GERTi MNC v1.5 Build 10
 local component = require("component")
 local computer = require("computer")
 local event = require("event")
@@ -168,7 +168,7 @@ handler.RegisterNode = function (receiveM, sendM, port, originatorAddress, child
 			nodes[childGA]["shortest"]= {tier=value["tier"], add=key}
 			shortest = value["tier"]
 		end
-		if key ~= 0 then -- Do not attempt to access the MNC in the nodes table
+		if key ~= 0 and nodes[key] then -- Do not attempt to access the MNC in the nodes table and validate each key
 			nodes[key]["neighbors"][childGA]= math.floor(value["tier"])
 			if childTier < nodes[key]["shortest"]["tier"] then
 				nodes[key]["shortest"] = {tier=childTier, add=childGA}
@@ -279,6 +279,7 @@ function realStart()
 ------------------------ Startup procedure
 	if (component.isAvailable("modem")) then
 		mTable = {}
+		nodes[0.0] = {["add"] = component.modem.address, ["receiveM"] = component.modem.address, ["tier"] = 0, ["port"] = 4378, ["neighbors"]={}}
 		for address, value in component.list("modem") do
 			mTable[address] = component.proxy(address)
 			mTable[address].open(4378)
@@ -289,6 +290,7 @@ function realStart()
 	end
 	if (component.isAvailable("tunnel")) then
 		tTable = {}
+		nodes[0.0] = {["add"] = component.tunnel.address, ["receiveM"] = component.tunnel.address, ["tier"] = 0, ["port"] = 0, ["neighbors"]={}}
 		for address, value in component.list("tunnel") do
 			tTable[address] = component.proxy(address)
 		end
